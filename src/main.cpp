@@ -28,7 +28,6 @@
 #ifdef _WIN32
 #include <process.h>
 #include <direct.h>
-#include <WinSock.h>
 #pragma comment (lib, "Ws2_32.lib")
 #else
 #include <netdb.h>  // for gethostbyname()
@@ -45,22 +44,8 @@
 
 #include "drawboard.h"
 
-int setnonblock(int fd)
-{
-#ifdef _WIN32
-  u_long iMode = 1;
-  ioctlsocket(fd, FIONBIO, &iMode);
-#else
-  int flags;
 
-  flags  = fcntl(fd, F_GETFL);
-  flags |= O_NONBLOCK;
-  fcntl(fd, F_SETFL, flags);
-#endif
-
-  return 1;
-}
-
+bool running = true;
 // Handle signals
 void sighandler(int sig_num)
 {
@@ -81,6 +66,33 @@ int main(int argc, char* argv[])
 
   Drawboard *db = Drawboard::get();
 
+  db->init(1234);
 
+  timeval loopTime;
+  loopTime.tv_sec  = 0;
+  loopTime.tv_usec = 200000; // 200ms
+
+  running = true;
+  event_base_loopexit(db->m_eventBase, &loopTime);
+
+  // Create our Server Console user so we can issue commands
+
+//  time_t timeNow = time(NULL);
+  while (running && event_base_loop(db->m_eventBase, 0) == 0)
+  {
+    event_base_loopexit(db->m_eventBase, &loopTime);
+    //Kick out idle users etc
+  }
+    
+
+  /*
+  #ifdef WIN32
+  closesocket(m_socketlisten);
+  #else
+    close(m_socketlisten);
+  #endif
+
+  event_base_free(m_eventBase);
+  */
   return EXIT_SUCCESS;
 }

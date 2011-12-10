@@ -33,13 +33,21 @@
 #include <winsock2.h>
 #endif
 
+#include <iostream>
+#include <event.h>
+#include <vector>
+#include "client.h"
+
 class Drawboard
 {
   public:
     Drawboard() { };
     ~Drawboard() { };
 
-  bool init();
+  struct event m_listenEvent;
+  event_base* m_eventBase;
+
+  bool init(int port);
 
   //Singleton structure
   static Drawboard* get()
@@ -54,11 +62,35 @@ class Drawboard
     return m_instance;
   }
 
+  bool addClient(Client* client)
+  {
+    m_clients.push_back(client);
+    return true;
+  }
+
+  bool remClient(int m_fd)
+  {
+    for (std::vector<Client*>::iterator it = m_clients.begin(); it!=m_clients.end(); ++it)
+    {
+      if((*it)->getFd() == m_fd)
+      {
+        delete *it;
+        m_clients.erase(it);
+        break;
+      }
+    }
+    std::cout << "Client removed" << std::endl;
+
+    return true;
+  }
+
+  int getClientCount() { return m_clients.size(); };
+
 
 private:
-  struct event m_listenEvent;
+
   int m_socketlisten;
   time_t m_lastSave;
+  std::vector<Client*> m_clients;
 
-
-}
+};
