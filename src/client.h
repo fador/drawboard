@@ -37,8 +37,8 @@ extern int setnonblock(int fd);
 class Client
 {
 public:
-  Client():active(0),m_dataInBuffer(0) {buffer = new char(BUFFER_SIZE);};
-  Client(int _fd):active(0),m_dataInBuffer(0) {m_fd = _fd; buffer = new char(BUFFER_SIZE);};
+  Client():active(0),m_dataInBuffer(0),m_bufferPos(0) {buffer = new char(BUFFER_SIZE);};
+  Client(int _fd):active(0),m_dataInBuffer(0),m_bufferPos(0) {m_fd = _fd; buffer = new char(BUFFER_SIZE);};
   ~Client() {delete [] buffer;};
 
   int getFd() { return m_fd; }
@@ -46,6 +46,7 @@ public:
   char action;
   int m_fd;
   int m_dataInBuffer;
+  int m_bufferPos;
   char *buffer;
   time_t lastData;
   event m_event;

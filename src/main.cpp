@@ -85,14 +85,9 @@ int main(int argc, char* argv[])
   }
     
 
-  /*
-  #ifdef WIN32
-  closesocket(m_socketlisten);
-  #else
-    close(m_socketlisten);
-  #endif
+  db->cleanup();
 
-  event_base_free(m_eventBase);
-  */
+  event_base_free(db->m_eventBase);
+  
   return EXIT_SUCCESS;
 }

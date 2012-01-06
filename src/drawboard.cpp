@@ -107,3 +107,12 @@ bool Drawboard::init(int port)
   return true;
 }
 
+void Drawboard::cleanup()
+{
+  #ifdef WIN32
+  closesocket(m_socketlisten);
+  #else
+    close(m_socketlisten);
+  #endif
+}
+

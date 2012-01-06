@@ -86,6 +86,7 @@ class Drawboard
 
   int getClientCount() { return m_clients.size(); };
 
+  void cleanup();
 
 private:
 

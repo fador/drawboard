@@ -25,6 +25,7 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #ifdef WIN32
 #include <cstdlib>
 typedef int socklen_t;
@@ -51,12 +52,14 @@ extern "C" void client_callback(int fd, short ev, void* arg)
     int read = 1;
 
     read = recv(fd, clientBuf, BUFSIZE, 0);
-
+    #ifdef DEBUG
     std::cout << "Read from socket " << read << std::endl;
+    #endif
     if (read == 0)
     {
+      #ifdef DEBUG
       std::cout << "Socket closed properly" << std::endl;
-      //LOG2(INFO, "Socket closed properly");
+      #endif
       Drawboard::get()->remClient(fd);
       
       return;
@@ -64,9 +67,9 @@ extern "C" void client_callback(int fd, short ev, void* arg)
 
     if (read == SOCKET_ERROR)
     {
+      #ifdef DEBUG
       std::cout << "Socket had no data to read" << std::endl;
-      //LOG2(INFO, "Socket had no data to read");
-
+      #endif
       Drawboard::get()->remClient(fd);
 
       return;
@@ -100,14 +103,11 @@ extern "C" void client_callback(int fd, short ev, void* arg)
       if ((errno != EAGAIN && errno != EINTR))
 #endif
       {
-        //LOG2(ERROR, "Error writing to client, tried to write " + dtos(buf.size()) + " bytes, code: " + dtos(ERROR_NUMBER));
+        #ifdef DEBUG
         std::cout << "Error writing to client, tried to write " << std::endl;
+        #endif
         Drawboard::get()->remClient(fd);
         return;
-      }
-      else
-      {
-        //user->write_err_count++;
       }
 
     }
@@ -128,8 +128,9 @@ extern "C" void accept_callback(int fd, short ev, void* arg)
 
   if (client_fd < 0)
   {
-    //LOGLF("Client: accept() failed");
+    #ifdef DEBUG
     std::cout << "Client: accept() failed" << std::endl;
+    #endif
     return;
   }
 
