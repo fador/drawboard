@@ -25,8 +25,13 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <cstdint>
+#include <png.h>
+#include <string>
+#include "md5/md5.h"
 #include "drawboard.h"
 #include "client.h"
+#include "tools.h"
 
 int setnonblock(int fd)
 {
@@ -116,3 +121,57 @@ void Drawboard::cleanup()
   #endif
 }
 
+
+int Drawboard::authenticate(Client* client)
+{
+    if( (client->m_dataInBuffer - client->m_bufferPos) < 46)
+    {
+      return NEED_MORE_DATA;
+    }
+    std::string hash(' ',32);
+    uint32_t curpos = 1;
+    uint32_t UID=getUint16((uint8_t *)(client->buffer+client->m_bufferPos+curpos));         curpos += 2;
+    uint8_t  chanID = client->buffer[client->m_bufferPos+curpos];                           curpos++;
+    uint64_t timestamp = getUint64((uint8_t *)(client->buffer+client->m_bufferPos+curpos)); curpos += 8;
+    uint8_t  adminbit = client->buffer[client->m_bufferPos+curpos];                         curpos++;
+    memcpy((void *)hash.data(), (uint8_t *)(client->buffer+client->m_bufferPos+curpos),32);                curpos += 32;
+    uint32_t nicklen=getUint16((uint8_t *)(client->buffer+client->m_bufferPos+curpos));     curpos+=2;
+    if( (client->m_dataInBuffer - client->m_bufferPos - curpos) < nicklen)
+    {
+      return NEED_MORE_DATA;
+    }
+    std::string nick;
+    for(uint32_t i = 0; i < nicklen; i++)
+    {
+      nick+=(char)client->buffer[client->m_bufferPos+curpos]; curpos ++;
+    }
+
+    //ToDo: implement configuration reader etc
+    if(0)//config.check_auth)
+    {
+      std::string user_time;
+      myItoa(timestamp,user_time,10);
+
+      //Check the auth data
+      std::string combination=user_time+"|SECRET_STRING|"+(char)('0'+adminbit)+"|"+nick;
+
+      std::string hash2;
+      MD5_CTX mdContext;
+		  unsigned int len = strlen (combination.c_str());
+
+		  MD5Init (&mdContext);
+		  MD5Update (&mdContext, (unsigned char *)(combination.c_str()), len);
+		  MD5Final (&mdContext);
+    			
+		  for (int iii = 0; iii < 16; iii++)
+			  hash2+=toHex((unsigned int)mdContext.digest[iii]);
+
+      if(hash2 != hash)
+      {
+        return DATA_ERROR;
+      }
+    }
+
+    return DATA_OK;
+
+}

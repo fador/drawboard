@@ -16,6 +16,12 @@
     <Filter Include="Source Files\libevent">
       <UniqueIdentifier>{618536d2-dd52-4abe-977b-799942f0f8bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\md5">
+      <UniqueIdentifier>{f768e4d9-b496-4ac3-b636-f2c4a4c9d213}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\md5">
+      <UniqueIdentifier>{ad5d2a94-ff81-48de-a3cb-9dfa199fce12}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp">
@@ -30,6 +36,12 @@
     <ClCompile Include="..\..\lib\libevent\event.c">
       <Filter>Source Files\libevent</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\md5\md5.c">
+      <Filter>Source Files\md5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tools.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\drawboard.h">
@@ -40,6 +52,12 @@
     </ClInclude>
     <ClInclude Include="..\..\lib\libevent\event.h">
       <Filter>Source Files\libevent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\md5\md5.h">
+      <Filter>Header Files\md5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\tools.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -30,14 +30,16 @@
 #include <cstdlib>
 typedef int socklen_t;
 #endif
+#include <cstdint>
 #include <cerrno>
-
+#include <ctime>
 
 #include "drawboard.h"
 #include "client.h"
+#include "tools.h"
 
 static const size_t BUFSIZE = 2048;
-static char* const clientBuf = new char(BUFSIZE);
+static char* const clientBuf = new char[BUFSIZE];
 
 #ifndef WIN32
 #define SOCKET_ERROR -1
@@ -46,6 +48,7 @@ static char* const clientBuf = new char(BUFSIZE);
 extern "C" void client_callback(int fd, short ev, void* arg)
 {
   Client* client = reinterpret_cast<Client*>(arg);
+  std::vector<char> outBuf;
 
   if (ev & EV_READ)
   {
@@ -75,45 +78,100 @@ extern "C" void client_callback(int fd, short ev, void* arg)
       return;
     }
 
-    //client->lastData = std::time(NULL);
+    //Store the time
+    //client->lastData = time(NULL);
 
-    //memcpy((void *)client->buffer[client->m_dataInBuffer], clientBuf, read);
-    //client->m_dataInBuffer += read;
+    //Check for buffer overflow
+    if(client->m_dataInBuffer + read > BUFSIZE)
+    {
+      Drawboard::get()->remClient(fd);
+      return;
+    }
 
-    /*
+    memcpy((void *)client->buffer[client->m_dataInBuffer], clientBuf, read);
+    client->m_dataInBuffer += read;
+
+    
     //Handle the data
     while (client->m_dataInBuffer)
     {
-        event_set(&client->m_event, fd, EV_READ, client_callback, client);
-        event_add(&client->m_event, NULL);
-        return;
-
-    } // while(user->buffer)
-    */
-
-    const int written = send(fd, clientBuf, read, 0);
-
-    if (written == SOCKET_ERROR)
-    {
-#ifdef WIN32
-#define ERROR_NUMBER WSAGetLastError()
-      if ((ERROR_NUMBER != WSATRY_AGAIN && ERROR_NUMBER != WSAEINTR && ERROR_NUMBER != WSAEWOULDBLOCK))
-#else
-#define ERROR_NUMBER errno
-      if ((errno != EAGAIN && errno != EINTR))
-#endif
+      //If user has not authenticated and tries to send other data
+      if(client->buffer[client->m_bufferPos] != 0x05 && client->UID == -1)
       {
-        #ifdef DEBUG
-        std::cout << "Error writing to client, tried to write " << std::endl;
-        #endif
         Drawboard::get()->remClient(fd);
         return;
       }
+      switch(client->buffer[client->m_bufferPos])
+      {
+        //uncompressed draw data
+        case 0x00:
+        break;
+        //compressed draw data
+        case 0x01:
+        break;
+        //Chat data
+        case 0x04:
+        break;
+        //Authentication
+        case 0x05:
+        {
+          int response = Drawboard::get()->authenticate(client);
 
+          if(response == NEED_MORE_DATA)
+          {
+            event_set(&client->m_event, fd, EV_READ, client_callback, client);
+            event_add(&client->m_event, NULL);          
+            return;
+          }
+          else if(response == DATA_ERROR)
+          {
+            Drawboard::get()->remClient(fd);
+            return;
+          }
+
+          client->UID = Drawboard::get()->generateUID();
+        }
+        break;
+
+        //If something else, remove the client
+        default:
+          Drawboard::get()->remClient(fd);
+          return;
+          break;
+      }
+
+      /*
+      event_set(&client->m_event, fd, EV_READ, client_callback, client);
+      event_add(&client->m_event, NULL);
+      return;
+      */
+    } // while(user->buffer)
+    
+    if(outBuf.size())
+    {
+      const int written = send(fd, outBuf.data(), outBuf.size(), 0);
+
+      if (written == SOCKET_ERROR)
+      {
+  #ifdef WIN32
+  #define ERROR_NUMBER WSAGetLastError()
+        if ((ERROR_NUMBER != WSATRY_AGAIN && ERROR_NUMBER != WSAEINTR && ERROR_NUMBER != WSAEWOULDBLOCK))
+  #else
+  #define ERROR_NUMBER errno
+        if ((errno != EAGAIN && errno != EINTR))
+  #endif
+        {
+          #ifdef DEBUG
+          std::cout << "Error writing to client, tried to write " << std::endl;
+          #endif
+          Drawboard::get()->remClient(fd);
+          return;
+        }
+
+      }
     }
 
   }
-
  
   event_set(&client->m_event, fd, EV_READ, client_callback, client);
   event_add(&client->m_event, NULL);

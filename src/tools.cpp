@@ -24,33 +24,81 @@
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include <cstdint>
+#ifdef _WIN32
+  // This is needed for event to work on Windows.
+  #define NOMINMAX
+  #include <winsock2.h>
+#else
+  #include <arpa/inet.h>
+#endif
 
-#pragma once
+#include <sstream>
+#include <string>
+#include <iomanip>
+#include "tools.h"
 
-const int BUFFER_SIZE = 2048;
 
-extern "C" void accept_callback(int fd, short ev, void* arg);
-extern "C" void client_callback(int fd, short ev, void* arg);
-
-extern int setnonblock(int fd);
-
-class Client
+int32_t getSint32(uint8_t* buf)
 {
-public:
-  Client():UID(-1),m_dataInBuffer(0),m_bufferPos(0),lastData(0) {buffer = new char[BUFFER_SIZE];};
-  Client(int _fd):UID(-1),m_dataInBuffer(0),m_bufferPos(0),lastData(0) {m_fd = _fd; buffer = new char[BUFFER_SIZE];};
-  ~Client() {delete [] buffer;};
+  int32_t val = ntohl(*reinterpret_cast<const int32_t*>(buf));
+  return val;
+}
 
-  int getFd() { return m_fd; }
+int32_t getSint16(uint8_t* buf)
+{
+  int16_t val = ntohs(*reinterpret_cast<const int16_t*>(buf));
 
-  char action;
-  int m_fd;
-  int m_dataInBuffer;
-  int m_bufferPos;
-  char *buffer;
-  time_t lastData;
-  event m_event;
+  return val;
+}
 
-  int UID;
-};
+uint32_t getUint32(uint8_t* buf)
+{
+  uint32_t val = ntohl(*reinterpret_cast<const uint32_t*>(buf));
+  return val;
+}
 
+uint32_t getUint16(uint8_t* buf)
+{
+  uint16_t val = ntohs(*reinterpret_cast<const uint16_t*>(buf));
+
+  return val;
+}
+
+uint64_t getUint64(uint8_t* buf)
+{
+  uint64_t val;
+  memcpy(&val, buf, 8);
+  val = ntohll(val);
+  return val;
+}
+
+
+void myItoa(uint64_t value, std::string& buf, int base)
+{	
+  int i = 20;
+    buf="";	
+    if(!value) buf="0";
+  for(; value && i ; --i, value /= base) buf = "0123456789abcdef"[value % base] + buf;	
+}
+
+
+std::string toHex(unsigned int value)
+{
+  std::ostringstream oss;
+  if(!(oss<<std::hex<<std::setw(2)<<std::setfill('0')<<value)) return 0;
+  return oss.str();
+}
+
+
+uint32_t genUID()
+{
+  static uint32_t UID = 0;
+  return ++UID;
+}
+
+
+inline uint64_t ntohll(uint64_t v)
+{
+  return (uint64_t)ntohl(v & 0x00000000ffffffff) << 32 | (uint64_t)ntohl((v >> 32) & 0x00000000ffffffff);
+}

@@ -25,32 +25,18 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#pragma once
 
-const int BUFFER_SIZE = 2048;
+int32_t getSint32(uint8_t* buf);
+int32_t getSint16(uint8_t* buf);
 
-extern "C" void accept_callback(int fd, short ev, void* arg);
-extern "C" void client_callback(int fd, short ev, void* arg);
+uint64_t getUint64(uint8_t* buf);
+uint32_t getUint32(uint8_t* buf);
+uint32_t getUint16(uint8_t* buf);
 
-extern int setnonblock(int fd);
 
-class Client
-{
-public:
-  Client():UID(-1),m_dataInBuffer(0),m_bufferPos(0),lastData(0) {buffer = new char[BUFFER_SIZE];};
-  Client(int _fd):UID(-1),m_dataInBuffer(0),m_bufferPos(0),lastData(0) {m_fd = _fd; buffer = new char[BUFFER_SIZE];};
-  ~Client() {delete [] buffer;};
+void myItoa(uint64_t value, std::string& buf, int base);
+std::string toHex(unsigned int value);
 
-  int getFd() { return m_fd; }
+inline uint64_t ntohll(uint64_t v);
 
-  char action;
-  int m_fd;
-  int m_dataInBuffer;
-  int m_bufferPos;
-  char *buffer;
-  time_t lastData;
-  event m_event;
-
-  int UID;
-};
-
+uint32_t genUID();

@@ -13,7 +13,7 @@ Format:
     Type:                   1 byte  (unsigned)
     Datalen                 2 bytes (unsigned)
     
-     //Draw data (1=zlib compressed)
+     //Draw data (0x01 = zlib compressed, 0x00 = uncompressed)
     IF Type == 0x00/0x01
         UserID              2 bytes //Only from server! Not used yet!
         Color RGB           3 bytes //writeByte (unsigned)
@@ -29,11 +29,11 @@ Format:
     //PNG image
     //Data from server
     IF Type == 0x02
-        Datalen     2 bytes ( << 16) PNG pictures can be quite large
+        Datalen     4 bytes  //PNG pictures can be quite large
         X           4 bytes  (unsigned) Position on the "map"        
         Y           4 bytes  (unsigned)
         level       1 byte   (unsigned)
-        PNGdata     n bytes
+        PNGdata     n bytes //n defined in Datalen
     end IF
     
     //PNG image
@@ -50,14 +50,20 @@ Format:
         Count       1 byte  //Count of users in this batch
         for every user
             UserID  2 bytes (unsigned)
-            NameLen 1 byte //Only in add
-            Name    n bytes //Only in add
+            if action == 0
+              NameLen 1 byte //Only in add
+              Name    n bytes //Only in add
+            end if
         end if
     end IF
     
     //Chat data
     if Type == 0x04
-        UserID      2 bytes (unsigned) (Only from server!)
+        if server_to_client
+          UserID      2 bytes (unsigned)
+          NameLen     1 byte
+          Name        n bytes
+        end if
         ChanID      1 byte        
         TextLen     1 byte (255 max len)
         Text        n bytes
@@ -65,10 +71,10 @@ Format:
     
     //Authenticate
     if Type == 0x05
-        UserID      2 bytes (unsigned)
+        UserID      2 bytes (unsigned), //-1 if assigned by server
         ChanID      1 byte
         Time        8 bytes
-        Admin       1 byte
+        Admin       1 byte    //Admin bit for later use
         MD5 Hash    32 bytes
         nickLen     1 byte
         nick        n bytes

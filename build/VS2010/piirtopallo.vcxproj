@@ -73,11 +73,17 @@
     <ClCompile Include="..\..\src\client.cpp" />
     <ClCompile Include="..\..\src\drawboard.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="..\..\src\md5\md5.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tools.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\lib\libevent\event.h" />
     <ClInclude Include="..\..\src\client.h" />
     <ClInclude Include="..\..\src\drawboard.h" />
+    <ClInclude Include="..\..\src\md5\md5.h" />
+    <ClInclude Include="..\..\src\tools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

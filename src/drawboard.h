@@ -27,16 +27,23 @@
 
 #pragma once
 
+const int NEED_MORE_DATA = -2;
+const int DATA_ERROR = -1;
+const int DATA_OK = 1;
+
+
 #ifdef _WIN32
 // This is needed for event to work on Windows.
 #define NOMINMAX
 #include <winsock2.h>
 #endif
 
+#include <cstdint>
 #include <iostream>
 #include <event.h>
 #include <vector>
 #include "client.h"
+#include "tools.h"
 
 class Drawboard
 {
@@ -48,6 +55,7 @@ class Drawboard
   event_base* m_eventBase;
 
   bool init(int port);
+  int authenticate(Client* client);
 
   //Singleton structure
   static Drawboard* get()
@@ -63,17 +71,25 @@ class Drawboard
   }
 
   bool addClient(Client* client)
-  {
+  {    
     m_clients.push_back(client);
     return true;
   }
 
+  //Search for the cliend and remove
   bool remClient(int m_fd)
   {
     for (std::vector<Client*>::iterator it = m_clients.begin(); it!=m_clients.end(); ++it)
     {
       if((*it)->getFd() == m_fd)
       {
+        //Close client socket
+        #ifdef WIN32
+          closesocket(m_fd);
+        #else
+          close(m_fd);
+        #endif
+        //ToDo: send info of removed client
         delete *it;
         m_clients.erase(it);
         break;
@@ -88,6 +104,11 @@ class Drawboard
 
   void cleanup();
 
+  uint32_t generateUID()
+  {
+    return genUID();
+  }
+
 private:
 
   int m_socketlisten;
@@ -95,3 +116,4 @@ private:
   std::vector<Client*> m_clients;
 
 };
+
