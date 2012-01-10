@@ -31,6 +31,12 @@ const int NEED_MORE_DATA = -2;
 const int DATA_ERROR = -1;
 const int DATA_OK = 1;
 
+const char ACTION_DRAW_DATA             = 0x00;
+const char ACTION_COMPRESSED_DRAW_DATA  = 0x01;
+const char ACTION_USER_ADD              = 0x03;
+const char ACTION_USER_REM              = 0x03;
+const char ACTION_CHAT_DATA             = 0x04;
+const char ACTION_AUTH                  = 0x05;
 
 #ifdef _WIN32
 // This is needed for event to work on Windows.
@@ -99,6 +105,12 @@ class Drawboard
 
     return true;
   }
+
+  int sendAll(uint8_t *data, uint32_t datalen, int exception=0);
+  int send(int fd,uint8_t *data, uint32_t datalen);
+
+  int sendChat(Client *client,std::string data, uint8_t chan);
+  std::vector<uint8_t> getUserlist();
 
   int getClientCount() { return m_clients.size(); };
 

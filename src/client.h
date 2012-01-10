@@ -51,6 +51,9 @@ public:
   time_t lastData;
   event m_event;
 
+  std::string nick;
+  bool admin;
+
   int UID;
 };
 

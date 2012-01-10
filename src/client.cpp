@@ -48,7 +48,7 @@ static char* const clientBuf = new char[BUFSIZE];
 extern "C" void client_callback(int fd, short ev, void* arg)
 {
   Client* client = reinterpret_cast<Client*>(arg);
-  std::vector<char> outBuf;
+  std::vector<uint8_t> outBuf;
 
   if (ev & EV_READ)
   {
@@ -81,7 +81,7 @@ extern "C" void client_callback(int fd, short ev, void* arg)
     //Store the time
     //client->lastData = time(NULL);
 
-    //Check for buffer overflow
+    //Check for buffer overflow, and kill client if it's happening
     if(client->m_dataInBuffer + read > BUFSIZE)
     {
       Drawboard::get()->remClient(fd);
@@ -104,16 +104,16 @@ extern "C" void client_callback(int fd, short ev, void* arg)
       switch(client->buffer[client->m_bufferPos])
       {
         //uncompressed draw data
-        case 0x00:
+        case ACTION_DRAW_DATA:
         break;
         //compressed draw data
-        case 0x01:
+        case ACTION_COMPRESSED_DRAW_DATA:
         break;
         //Chat data
-        case 0x04:
+        case ACTION_CHAT_DATA:
         break;
         //Authentication
-        case 0x05:
+        case ACTION_AUTH:
         {
           int response = Drawboard::get()->authenticate(client);
 
@@ -129,7 +129,13 @@ extern "C" void client_callback(int fd, short ev, void* arg)
             return;
           }
 
+          //Send userlist to the new client
+          outBuf = Drawboard::get()->getUserlist();
+
+          //Generate uid for the user
           client->UID = Drawboard::get()->generateUID();
+
+          //ToDo: send others info of the new client
         }
         break;
 
@@ -149,25 +155,9 @@ extern "C" void client_callback(int fd, short ev, void* arg)
     
     if(outBuf.size())
     {
-      const int written = send(fd, outBuf.data(), outBuf.size(), 0);
-
-      if (written == SOCKET_ERROR)
+      if(Drawboard::get()->send(fd,(uint8_t *)outBuf.data(), outBuf.size()) == -1)
       {
-  #ifdef WIN32
-  #define ERROR_NUMBER WSAGetLastError()
-        if ((ERROR_NUMBER != WSATRY_AGAIN && ERROR_NUMBER != WSAEINTR && ERROR_NUMBER != WSAEWOULDBLOCK))
-  #else
-  #define ERROR_NUMBER errno
-        if ((errno != EAGAIN && errno != EINTR))
-  #endif
-        {
-          #ifdef DEBUG
-          std::cout << "Error writing to client, tried to write " << std::endl;
-          #endif
-          Drawboard::get()->remClient(fd);
-          return;
-        }
-
+        return;
       }
     }
 

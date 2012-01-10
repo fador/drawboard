@@ -33,6 +33,7 @@
 #include <netdb.h>  // for gethostbyname()
 #endif
 
+#include <cstdint>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>

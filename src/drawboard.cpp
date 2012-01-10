@@ -28,6 +28,8 @@
 #include <cstdint>
 #include <png.h>
 #include <string>
+#include <vector>
+
 #include "md5/md5.h"
 #include "drawboard.h"
 #include "client.h"
@@ -145,6 +147,7 @@ int Drawboard::authenticate(Client* client)
     {
       nick+=(char)client->buffer[client->m_bufferPos+curpos]; curpos ++;
     }
+    
 
     //ToDo: implement configuration reader etc
     if(0)//config.check_auth)
@@ -171,7 +174,58 @@ int Drawboard::authenticate(Client* client)
         return DATA_ERROR;
       }
     }
+    client->nick = nick;
+    client->admin = adminbit;
 
     return DATA_OK;
 
+}
+
+
+int Drawboard::sendAll(uint8_t *data, uint32_t datalen, int exception)
+{
+  
+  return 1;
+}
+
+int Drawboard::send(int fd,uint8_t *data, uint32_t datalen)
+{
+    const int written = ::send(fd, (const char *)data, datalen,0);
+
+    if (written == SOCKET_ERROR)
+    {
+#ifdef WIN32
+#define ERROR_NUMBER WSAGetLastError()
+      if ((ERROR_NUMBER != WSATRY_AGAIN && ERROR_NUMBER != WSAEINTR && ERROR_NUMBER != WSAEWOULDBLOCK))
+#else
+#define ERROR_NUMBER errno
+      if ((errno != EAGAIN && errno != EINTR))
+#endif
+      {
+        #ifdef DEBUG
+        std::cout << "Error writing to client, tried to write " << std::endl;
+        #endif
+        remClient(fd);
+        return -1;
+      }
+    }
+    return 1;
+}
+
+
+std::vector<uint8_t> Drawboard::getUserlist()
+{
+  std::vector<uint8_t> data;
+  data.push_back(ACTION_USER_ADD);
+  data.push_back(1); //Add
+}
+
+
+int Drawboard::sendChat(Client *client,std::string data, uint8_t chan)
+{
+  std::vector<uint8_t> data;
+  data.push_back(ACTION_CHAT_DATA);
+
+
+  return 1;
 }
