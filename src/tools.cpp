@@ -37,30 +37,30 @@
 #include <string>
 #include <iomanip>
 #include "tools.h"
-
+#include "drawboard.h"
 
 
 void putSint32(uint8_t* buf, int32_t value)
 {
-  uint32_t nval = htonl(value);
+  uint32_t nval = value;//htonl(value);
   memcpy(buf, &nval, 4);
 }
 
 void putSint16(uint8_t* buf, int16_t value)
 {
-  short value2 = htons(value);
+  short value2 = value;//htons(value);
   memcpy(buf, &value2, 2);
 }
 
 void putUint32(uint8_t* buf, uint32_t value)
 {
-  uint32_t nval = htonl(value);
+  uint32_t nval = value;//htonl(value);
   memcpy(buf, &nval, 4);
 }
 
 void putUint16(uint8_t* buf, uint16_t value)
 {
-  short value2 = htons(value);
+  short value2 = value;//htons(value);
   memcpy(buf, &value2, 2);
 }
 

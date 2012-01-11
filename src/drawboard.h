@@ -55,7 +55,7 @@ const char ACTION_AUTH                  = 0x05;
 class Drawboard
 {
   public:
-    Drawboard() { };
+    Drawboard():littleEndian(true) { };
     ~Drawboard() { };
 
   struct event m_listenEvent;
@@ -84,28 +84,7 @@ class Drawboard
   }
 
   //Search for the cliend and remove
-  bool remClient(int m_fd)
-  {
-    for (std::vector<Client*>::iterator it = m_clients.begin(); it!=m_clients.end(); ++it)
-    {
-      if((*it)->getFd() == m_fd)
-      {
-        //Close client socket
-        #ifdef WIN32
-          closesocket(m_fd);
-        #else
-          close(m_fd);
-        #endif
-        //ToDo: send info of removed client
-        delete *it;
-        m_clients.erase(it);
-        break;
-      }
-    }
-    std::cout << "Client removed" << std::endl;
-
-    return true;
-  }
+  bool remClient(int m_fd);
 
   int sendAll(uint8_t *data, uint32_t datalen, int exception=0);
   int send(int fd,uint8_t *data, uint32_t datalen);
@@ -121,6 +100,8 @@ class Drawboard
   {
     return genUID();
   }
+
+  bool littleEndian;
 
 private:
 

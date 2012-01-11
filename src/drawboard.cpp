@@ -126,28 +126,33 @@ void Drawboard::cleanup()
 
 int Drawboard::authenticate(Client* client)
 {
-    if(client->buffer.size() < 48)
+    uint32_t curpos = 1;
+    uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));         curpos += 2;
+
+    #ifdef DEBUG
+    std::cout << "    Len: " << len << std::endl;
+    #endif
+    if(client->buffer.size()-curpos < len)
     {
       return NEED_MORE_DATA;
     }
     std::string hash(' ',32);
-    uint32_t curpos = 3;
-    uint32_t UID=getUint16((uint8_t *)(&client->buffer[0]+curpos));         curpos += 2;
+    
+    int32_t UID=getSint16((uint8_t *)(&client->buffer[0]+curpos));          curpos += 2;
     uint8_t  chanID = client->buffer[curpos];                               curpos++;
     uint64_t timestamp = getUint64((uint8_t *)(&client->buffer[0]+curpos)); curpos += 8;
     uint8_t  adminbit = client->buffer[curpos];                             curpos++;
     memcpy((void *)hash.data(), (uint8_t *)(&client->buffer[0]+curpos),32); curpos += 32;
-    uint32_t nicklen=getUint16((uint8_t *)(&client->buffer[0]+curpos));     curpos+=2;
-    if( (client->buffer.size() - curpos) < nicklen)
-    {
-      return NEED_MORE_DATA;
-    }
+    uint32_t nicklen=client->buffer[curpos];                                curpos++;
+
     std::string nick;
     for(uint32_t i = 0; i < nicklen; i++)
     {
       nick+=(char)client->buffer[curpos]; curpos ++;
     }
-    
+
+    //Clear the data from the buffer
+    client->eraseFromBuffer(curpos);
 
     //ToDo: implement configuration reader etc
     if(0)//config.check_auth)
@@ -174,10 +179,9 @@ int Drawboard::authenticate(Client* client)
       }
     }
     client->nick = nick;
-    client->admin = adminbit;
+    client->admin = (adminbit==0)?false:true;
 
-    //Clear the data from the buffer
-    client->eraseFromBuffer(curpos);
+
 
     return DATA_OK;
 
@@ -186,14 +190,22 @@ int Drawboard::authenticate(Client* client)
 
 int Drawboard::sendAll(uint8_t *data, uint32_t datalen, int exception)
 {
-  
+  for(uint32_t i = 0; i < m_clients.size(); i++)
+  {
+    if(m_clients[i]->getFd() != exception)
+    {
+      send(m_clients[i]->getFd(), data, datalen);
+    }
+  }
   return 1;
 }
 
 int Drawboard::send(int fd,uint8_t *data, uint32_t datalen)
 {
     const int written = ::send(fd, (const char *)data, datalen,0);
-
+    #ifdef DEBUG
+    std::cout << "Written " << written << " bytes to client" << std::endl;
+    #endif
     if (written == SOCKET_ERROR)
     {
 #ifdef WIN32
@@ -217,9 +229,9 @@ int Drawboard::send(int fd,uint8_t *data, uint32_t datalen)
 
 std::vector<uint8_t> Drawboard::getUserlist()
 {
-  std::vector<uint8_t> data;
-  data.push_back(ACTION_USER_ADD);
+  std::vector<uint8_t> data;  
   data.push_back(1); //Add
+  return data;
 }
 
 
@@ -253,4 +265,42 @@ int Drawboard::sendChat(Client *client,std::string data, uint8_t chan)
   sendAll((uint8_t *)&chatdata[0],chatdata.size());
 
   return 1;
+}
+
+//Search for the cliend and remove
+bool Drawboard::remClient(int m_fd)
+{
+  uint32_t UID = -1;
+  std::string nick;
+  for (std::vector<Client*>::iterator it = m_clients.begin(); it!=m_clients.end(); ++it)
+  {
+    if((*it)->getFd() == m_fd)
+    {
+      if((*it)->UID > 0)
+      {
+        UID = (*it)->UID;
+        nick = (*it)->nick;
+      }
+      //Close client socket
+      #ifdef WIN32
+        closesocket(m_fd);
+      #else
+        close(m_fd);
+      #endif
+      
+      delete *it;
+      m_clients.erase(it);
+      break;
+    }
+  }
+
+  //ToDo: send info of removed client
+  if(UID != -1)
+  {
+
+  }
+
+  std::cout << "Client removed" << std::endl;
+
+  return true;
 }

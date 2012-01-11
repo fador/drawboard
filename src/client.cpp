@@ -90,6 +90,9 @@ extern "C" void client_callback(int fd, short ev, void* arg)
       //If user has not authenticated and tries to send other data
       if(client->buffer[0] != 0x05 && client->UID == -1)
       {
+        #ifdef DEBUG
+        std::cout << "First data was not auth, closing" << std::endl;
+        #endif
         Drawboard::get()->remClient(fd);
         return;
       }
@@ -102,6 +105,9 @@ extern "C" void client_callback(int fd, short ev, void* arg)
             //Datalen
             uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
 
+            #ifdef DEBUG
+            std::cout << "  Draw data " << len << std::endl;
+            #endif
             //Wait for more data
             if( (client->buffer.size() - curpos) < len)
             {
@@ -121,6 +127,9 @@ extern "C" void client_callback(int fd, short ev, void* arg)
             //Datalen
             uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
 
+            #ifdef DEBUG
+            std::cout << "  Compressed draw data " << len << std::endl;
+            #endif
             //Wait for more data
             if( (client->buffer.size() - curpos) < len)
             {
@@ -153,6 +162,9 @@ extern "C" void client_callback(int fd, short ev, void* arg)
             //Datalen
             uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
 
+            #ifdef DEBUG
+            std::cout << "  PNG request " << len << std::endl;
+            #endif
             //Wait for more data
             if( (client->buffer.size() - curpos) < len)
             {
@@ -169,9 +181,13 @@ extern "C" void client_callback(int fd, short ev, void* arg)
         //Chat data
         case ACTION_CHAT_DATA:
           {
+
             //Datalen
             uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
 
+            #ifdef DEBUG
+            std::cout << "  Got chat data with length " << len << std::endl;
+            #endif
             //Wait for more data
             if( (client->buffer.size() - curpos) < len)
             {
@@ -189,6 +205,9 @@ extern "C" void client_callback(int fd, short ev, void* arg)
             //Clear the data from the buffer
             client->eraseFromBuffer(curpos+datalen);
 
+            #ifdef DEBUG
+            std::cout << "    Repeating chat data" << std::endl;
+            #endif
             Drawboard::get()->sendChat(client, chatdata, chan);
 
           }
@@ -196,10 +215,16 @@ extern "C" void client_callback(int fd, short ev, void* arg)
         //Authentication
         case ACTION_AUTH:
         {
+          #ifdef DEBUG
+            std::cout << "  Got auth " << std::endl;
+          #endif
           int response = Drawboard::get()->authenticate(client);
 
           if(response == NEED_MORE_DATA)
           {
+            #ifdef DEBUG
+            std::cout << "    NEED_MORE_DATA" << std::endl;
+            #endif
             event_set(&client->m_event, fd, EV_READ, client_callback, client);
             event_add(&client->m_event, NULL);          
             return;
@@ -211,7 +236,7 @@ extern "C" void client_callback(int fd, short ev, void* arg)
           }
 
           //Send userlist to the new client
-          outBuf = Drawboard::get()->getUserlist();
+          //outBuf = Drawboard::get()->getUserlist();
 
           //Generate uid for the user
           client->UID = Drawboard::get()->generateUID();

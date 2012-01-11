@@ -279,7 +279,7 @@ package
       for (i = 0; i < 11; i++)
         addChild(brushShapeArray[i]);
       
-      infoField.text = "Yritetaan yhdistaa serverille!";
+      infoField.text = "Connecting " + root.loaderInfo.parameters.host + ":"+ root.loaderInfo.parameters.port;
       //Initialize connection!
       server = new CustomSocket();
       
@@ -287,7 +287,8 @@ package
       server.addEventListener("connected", connectHandler);
       server.addEventListener("newdata", dataHandler);
       
-      server.connect("81.19.124.25", 2089);
+      server.connect(root.loaderInfo.parameters.host, root.loaderInfo.parameters.port);
+      //server.connect("81.19.124.25", 2089);
       //server.connect("localhost", 2089);
       //server.connect("94.237.93.239", 2089);           
       
@@ -349,7 +350,7 @@ package
         var chatmsg:ByteArray = new ByteArray();
         var text:String = new String();
         var mydata:ByteArray = new ByteArray;
-        infoField.text = "Viesti lahetetty!";
+        infoField.text = "Msg sent!";
         text = inputField.text;
         server.writeByte(4); //Type
         server.writeShort(1 + 1 + text.length); //Len
@@ -718,7 +719,7 @@ package
         
         event.data.position = 0;
         //infoField.text="Image incoming!\n"+event.data.bytesAvailable+" bytes";
-        infoField.text = "Kuva ladattu. Voit piirtaa!";
+        infoField.text = "Canvas loaded, ready to draw!";
         //X
         event.data.readUnsignedInt();
         //Y
@@ -797,17 +798,22 @@ package
         var tempdata:ByteArray = new ByteArray();
         //var UID:uint = new uint();
         var textlen:uint = new uint();
+        var nicklen:uint = new uint();
+        var nick:String = new String("");
         var temptext:String = new String("");
         tempdata.writeBytes(event.data);
         tempdata.position = 0;
-        UID = tempdata.readUnsignedShort();
+        UID     = tempdata.readUnsignedShort();
+        nicklen = tempdata.readUnsignedByte();
+        nick    = tempdata.readUTFBytes(nicklen);
+        
         tempdata.readByte(); //Chan not used
         
         //tempdata.uncompress();
         
         textlen = tempdata.readUnsignedByte();
         temptext = tempdata.readUTFBytes(textlen);
-        
+        /*
         for (i = 0; i < nickList.length; i++)
         {
           if (nickList[i][0] == UID)
@@ -816,6 +822,9 @@ package
             break;
           }
         }
+        */
+        
+        chatField.appendText("<" + nick + "> ");
         //trace("Nick: " + nickList[0][1]);
         chatField.appendText(temptext + "\n");
         chatField.scrollV = chatField.maxScrollV;
@@ -847,7 +856,7 @@ package
           //incomingPaint.clear();
       }
       connected = true;
-      setNick();
+      
     }
     
     private function connectHandler(event:Event):void
@@ -858,8 +867,9 @@ package
     //Authentication
     private function sendAuth():void
     {
-      infoField.text = "Yhdistetty!";
+      infoField.text = "Connection success!";
       //connected=true;
+      setNick();
       
       var dataToSend:ByteArray = new ByteArray();
       dataToSend.writeByte(2); //PNG request
@@ -876,7 +886,7 @@ package
     private function closeHandler(event:Event):void
     {
       connected = false;
-      infoField.text = "Yhteys katkesi!";
+      infoField.text = "Connection lost!";
     }
     
     private function colorChange(e:Event):void

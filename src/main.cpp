@@ -67,7 +67,14 @@ int main(int argc, char* argv[])
 
   Drawboard *db = Drawboard::get();
 
-  db->init(1234);
+  int32_t endiantestint = 1;
+  int8_t* endiantestchar = (int8_t*)&endiantestint;
+  if (*endiantestchar != 1)
+  {
+    db->littleEndian = false;
+  }
+
+  db->init(2089);
 
   timeval loopTime;
   loopTime.tv_sec  = 0;

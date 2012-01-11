@@ -1,14 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<project>
+<project version="2">
   <!-- Output SWF options -->
   <output>
-    <movie disabled="False" />
+    <movie outputType="Application" />
     <movie input="" />
-    <movie path="..\..\..\..\wwwroot\fadorbe\piirto.swf" />
+    <movie path="drawboard.swf" />
     <movie fps="25" />
     <movie width="1024" />
     <movie height="808" />
     <movie version="9" />
+    <movie minorVersion="0" />
+    <movie platform="Flash Player" />
     <movie background="#B8DBF5" />
   </output>
   <!-- Other classes to be compiled into your SWF -->
@@ -21,10 +23,13 @@
     <option allowSourcePathOverlap="False" />
     <option benchmark="True" />
     <option es="False" />
+    <option locale="" />
     <option loadConfig="" />
     <option optimize="False" />
+    <option omitTraces="True" />
     <option showActionScriptWarnings="True" />
     <option showBindingWarnings="True" />
+    <option showInvalidCSS="True" />
     <option showDeprecationWarnings="True" />
     <option showUnusedTypeSelectorWarnings="True" />
     <option strict="True" />
@@ -34,8 +39,10 @@
     <option verboseStackTraces="False" />
     <option linkReport="" />
     <option loadExterns="" />
+    <option staticLinkRSL="True" />
     <option additional="" />
-    <option customSDK="C:\flex_sdk" />
+    <option compilerConstants="" />
+    <option minorVersion="" />
   </build>
   <!-- SWC Include Libraries -->
   <includeLibraries>
@@ -79,4 +86,6 @@
     <option testMovie="OpenDocument" />
     <option testMovieCommand="piirto.html" />
   </options>
+  <!-- Plugin storage -->
+  <storage />
 </project>
