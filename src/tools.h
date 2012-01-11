@@ -26,6 +26,12 @@
 */
 
 
+void putSint32(uint8_t* buf, int32_t value);
+void putSint16(uint8_t* buf, int16_t value);
+
+void putUint32(uint8_t* buf, uint32_t value);
+void putUint16(uint8_t* buf, uint16_t value);
+
 int32_t getSint32(uint8_t* buf);
 int32_t getSint16(uint8_t* buf);
 

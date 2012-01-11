@@ -33,6 +33,7 @@ typedef int socklen_t;
 #include <cstdint>
 #include <cerrno>
 #include <ctime>
+#include <zlib.h>
 
 #include "drawboard.h"
 #include "client.h"
@@ -80,38 +81,118 @@ extern "C" void client_callback(int fd, short ev, void* arg)
 
     //Store the time
     //client->lastData = time(NULL);
-
-    //Check for buffer overflow, and kill client if it's happening
-    if(client->m_dataInBuffer + read > BUFSIZE)
-    {
-      Drawboard::get()->remClient(fd);
-      return;
-    }
-
-    memcpy((void *)client->buffer[client->m_dataInBuffer], clientBuf, read);
-    client->m_dataInBuffer += read;
-
-    
+        
+    client->buffer.insert(client->buffer.end(), clientBuf,clientBuf+read);
+        
     //Handle the data
-    while (client->m_dataInBuffer)
+    while (client->buffer.size()>2)
     {
       //If user has not authenticated and tries to send other data
-      if(client->buffer[client->m_bufferPos] != 0x05 && client->UID == -1)
+      if(client->buffer[0] != 0x05 && client->UID == -1)
       {
         Drawboard::get()->remClient(fd);
         return;
       }
-      switch(client->buffer[client->m_bufferPos])
+      int curpos = 1;
+      switch(client->buffer[0])
       {
         //uncompressed draw data
         case ACTION_DRAW_DATA:
-        break;
+          {
+            //Datalen
+            uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
+
+            //Wait for more data
+            if( (client->buffer.size() - curpos) < len)
+            {
+              event_set(&client->m_event, fd, EV_READ, client_callback, client);
+              event_add(&client->m_event, NULL);
+              return;
+            }
+            std::vector<uint8_t> drawdata;
+            drawdata.insert(drawdata.begin(),&client->buffer[0]+curpos, &client->buffer[0]+curpos+len);
+
+            client->eraseFromBuffer(curpos+len);
+          }
+          break;
         //compressed draw data
         case ACTION_COMPRESSED_DRAW_DATA:
-        break;
+          {
+            //Datalen
+            uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
+
+            //Wait for more data
+            if( (client->buffer.size() - curpos) < len)
+            {
+              event_set(&client->m_event, fd, EV_READ, client_callback, client);
+              event_add(&client->m_event, NULL);
+              return;
+            }
+
+            std::vector<uint8_t> drawdata;
+            drawdata.insert(drawdata.begin(),&client->buffer[0]+curpos, &client->buffer[0]+curpos+len);
+
+            uint32_t read=2000;
+
+            uint8_t *out=(uint8_t *)malloc(2000);
+
+            //Uncompress the data, kick client if invalid
+            if(uncompress((Bytef *)out, (uLongf *)&read, (Bytef *)&drawdata[0], drawdata.size())!=0)
+            {
+              free(out);
+              Drawboard::get()->remClient(fd);
+              return;
+            }
+
+            client->eraseFromBuffer(curpos+len);
+          }
+          break;
+          //compressed draw data
+        case ACTION_PNG_REQUEST:
+          {
+            //Datalen
+            uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
+
+            //Wait for more data
+            if( (client->buffer.size() - curpos) < len)
+            {
+              event_set(&client->m_event, fd, EV_READ, client_callback, client);
+              event_add(&client->m_event, NULL);
+              return;
+            }
+
+            //Clear the data from buffer
+            client->eraseFromBuffer(curpos+len);
+          }
+          break;
+          
         //Chat data
         case ACTION_CHAT_DATA:
-        break;
+          {
+            //Datalen
+            uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
+
+            //Wait for more data
+            if( (client->buffer.size() - curpos) < len)
+            {
+              event_set(&client->m_event, fd, EV_READ, client_callback, client);
+              event_add(&client->m_event, NULL);
+              return;
+            }
+
+            //ToDo: maybe check the data, now we just echo everything
+            uint8_t chan = client->buffer[curpos];    curpos++;
+            uint8_t datalen=client->buffer[curpos];   curpos++;
+
+            std::string chatdata(&client->buffer[curpos], &client->buffer[curpos]+datalen);
+
+            //Clear the data from the buffer
+            client->eraseFromBuffer(curpos+datalen);
+
+            Drawboard::get()->sendChat(client, chatdata, chan);
+
+          }
+          break;
         //Authentication
         case ACTION_AUTH:
         {

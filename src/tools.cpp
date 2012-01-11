@@ -39,6 +39,32 @@
 #include "tools.h"
 
 
+
+void putSint32(uint8_t* buf, int32_t value)
+{
+  uint32_t nval = htonl(value);
+  memcpy(buf, &nval, 4);
+}
+
+void putSint16(uint8_t* buf, int16_t value)
+{
+  short value2 = htons(value);
+  memcpy(buf, &value2, 2);
+}
+
+void putUint32(uint8_t* buf, uint32_t value)
+{
+  uint32_t nval = htonl(value);
+  memcpy(buf, &nval, 4);
+}
+
+void putUint16(uint8_t* buf, uint16_t value)
+{
+  short value2 = htons(value);
+  memcpy(buf, &value2, 2);
+}
+
+
 int32_t getSint32(uint8_t* buf)
 {
   int32_t val = ntohl(*reinterpret_cast<const int32_t*>(buf));

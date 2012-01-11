@@ -10,74 +10,78 @@ Type:
 
 Format:
 
-    Type:                   1 byte  (unsigned)
-    Datalen                 2 bytes (unsigned)
+    Type: 1 byte  (unsigned)    
     
      //Draw data (0x01 = zlib compressed, 0x00 = uncompressed)
     IF Type == 0x00/0x01
-        UserID              2 bytes //Only from server! Not used yet!
-        Color RGB           3 bytes //writeByte (unsigned)
-        Brush               1 byte (unsigned)
-        Start X         2 bytes (Absolute) //writeShort (Signed)
-        Start Y         2 bytes (Absolute) //writeShort (Signed)
-        for each step
-            End X       1 byte (Relative to previous point) (Signed)
-            End Y       1 byte (Relative to previous point) (Signed)
-        end for
+      Datalen             2 bytes (unsigned) (not compressed)
+      UserID              2 bytes //Only from server! Not used yet!
+      Color RGB           3 bytes //writeByte (unsigned)
+      Brush               1 byte (unsigned)
+      Start X         2 bytes (Absolute) //writeShort (Signed)
+      Start Y         2 bytes (Absolute) //writeShort (Signed)
+      for each step
+          End X       1 byte (Relative to previous point) (Signed)
+          End Y       1 byte (Relative to previous point) (Signed)
+      end for
     end IF
     
     //PNG image
     //Data from server
     IF Type == 0x02
-        Datalen     4 bytes  //PNG pictures can be quite large
-        X           4 bytes  (unsigned) Position on the "map"        
-        Y           4 bytes  (unsigned)
-        level       1 byte   (unsigned)
-        PNGdata     n bytes //n defined in Datalen
+      Datalen     4 bytes  //PNG pictures can be quite large
+      X           4 bytes  (unsigned) Position on the "map"        
+      Y           4 bytes  (unsigned)
+      level       1 byte   (unsigned)
+      PNGdata     n bytes //n defined in Datalen
     end IF
     
     //PNG image
     //Request from client
     IF Type == 0x02
-        X           4 bytes
-        Y           4 bytes
-        level       1 byte (unsigned)
+      Datalen     2 bytes 
+      X           4 bytes
+      Y           4 bytes
+      level       1 byte (unsigned)
     end IF
     
     //Userdata From server
     if Type == 0x03 
-        Action      1 byte (0=add, 1=remove)
-        Count       1 byte  //Count of users in this batch
-        for every user
-            UserID  2 bytes (unsigned)
-            if action == 0
-              NameLen 1 byte //Only in add
-              Name    n bytes //Only in add
-            end if
-        end if
+      Datalen     2 bytes 
+      Action      1 byte (0=add, 1=remove)
+      Count       1 byte  //Count of users in this batch
+      for every user
+          UserID  2 bytes (unsigned)
+          if action == 0
+            NameLen 1 byte //Only in add
+            Name    n bytes //Only in add
+          end if
+      end if
     end IF
     
     //Chat data
     if Type == 0x04
-        if server_to_client
-          UserID      2 bytes (unsigned)
-          NameLen     1 byte
-          Name        n bytes
-        end if
-        ChanID      1 byte        
-        TextLen     1 byte (255 max len)
-        Text        n bytes
+      Datalen     2 bytes 
+      if server_to_client
+        UserID      2 bytes (unsigned)
+        NameLen     1 byte
+        Name        n bytes
+      end if
+      ChanID      1 byte        
+      TextLen     1 byte (255 max len)
+      Text        n bytes
     end IF
     
     //Authenticate
     if Type == 0x05
-        UserID      2 bytes (unsigned), //-1 if assigned by server
-        ChanID      1 byte
-        Time        8 bytes
-        Admin       1 byte    //Admin bit for later use
-        MD5 Hash    32 bytes
-        nickLen     1 byte
-        nick        n bytes
+      Datalen     2 bytes 
+      UserID      2 bytes (unsigned), //-1 if assigned by server
+      ChanID      1 byte
+      Time        8 bytes
+      Admin       1 byte    //Admin bit for later use
+      MD5 Hash    32 bytes
+      nickLen     1 byte
+      nick        n bytes
     end IF
     
     

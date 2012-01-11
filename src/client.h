@@ -37,17 +37,20 @@ extern int setnonblock(int fd);
 class Client
 {
 public:
-  Client():UID(-1),m_dataInBuffer(0),m_bufferPos(0),lastData(0) {buffer = new char[BUFFER_SIZE];};
-  Client(int _fd):UID(-1),m_dataInBuffer(0),m_bufferPos(0),lastData(0) {m_fd = _fd; buffer = new char[BUFFER_SIZE];};
-  ~Client() {delete [] buffer;};
+  Client():UID(-1),lastData(0) {};
+  Client(int _fd):UID(-1),lastData(0) {m_fd = _fd; };
+  ~Client() {};
 
   int getFd() { return m_fd; }
+  bool eraseFromBuffer(uint32_t len)
+  {
+    buffer.erase(buffer.begin(), buffer.begin()+len);
+    return true;
+  }
 
   char action;
   int m_fd;
-  int m_dataInBuffer;
-  int m_bufferPos;
-  char *buffer;
+  std::vector<uint8_t> buffer;
   time_t lastData;
   event m_event;
 

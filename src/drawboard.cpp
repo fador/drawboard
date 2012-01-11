@@ -126,26 +126,26 @@ void Drawboard::cleanup()
 
 int Drawboard::authenticate(Client* client)
 {
-    if( (client->m_dataInBuffer - client->m_bufferPos) < 46)
+    if(client->buffer.size() < 48)
     {
       return NEED_MORE_DATA;
     }
     std::string hash(' ',32);
-    uint32_t curpos = 1;
-    uint32_t UID=getUint16((uint8_t *)(client->buffer+client->m_bufferPos+curpos));         curpos += 2;
-    uint8_t  chanID = client->buffer[client->m_bufferPos+curpos];                           curpos++;
-    uint64_t timestamp = getUint64((uint8_t *)(client->buffer+client->m_bufferPos+curpos)); curpos += 8;
-    uint8_t  adminbit = client->buffer[client->m_bufferPos+curpos];                         curpos++;
-    memcpy((void *)hash.data(), (uint8_t *)(client->buffer+client->m_bufferPos+curpos),32);                curpos += 32;
-    uint32_t nicklen=getUint16((uint8_t *)(client->buffer+client->m_bufferPos+curpos));     curpos+=2;
-    if( (client->m_dataInBuffer - client->m_bufferPos - curpos) < nicklen)
+    uint32_t curpos = 3;
+    uint32_t UID=getUint16((uint8_t *)(&client->buffer[0]+curpos));         curpos += 2;
+    uint8_t  chanID = client->buffer[curpos];                               curpos++;
+    uint64_t timestamp = getUint64((uint8_t *)(&client->buffer[0]+curpos)); curpos += 8;
+    uint8_t  adminbit = client->buffer[curpos];                             curpos++;
+    memcpy((void *)hash.data(), (uint8_t *)(&client->buffer[0]+curpos),32); curpos += 32;
+    uint32_t nicklen=getUint16((uint8_t *)(&client->buffer[0]+curpos));     curpos+=2;
+    if( (client->buffer.size() - curpos) < nicklen)
     {
       return NEED_MORE_DATA;
     }
     std::string nick;
     for(uint32_t i = 0; i < nicklen; i++)
     {
-      nick+=(char)client->buffer[client->m_bufferPos+curpos]; curpos ++;
+      nick+=(char)client->buffer[curpos]; curpos ++;
     }
     
 
@@ -160,10 +160,9 @@ int Drawboard::authenticate(Client* client)
 
       std::string hash2;
       MD5_CTX mdContext;
-		  unsigned int len = strlen (combination.c_str());
 
 		  MD5Init (&mdContext);
-		  MD5Update (&mdContext, (unsigned char *)(combination.c_str()), len);
+		  MD5Update (&mdContext, (unsigned char *)(combination.c_str()), combination.size());
 		  MD5Final (&mdContext);
     			
 		  for (int iii = 0; iii < 16; iii++)
@@ -176,6 +175,9 @@ int Drawboard::authenticate(Client* client)
     }
     client->nick = nick;
     client->admin = adminbit;
+
+    //Clear the data from the buffer
+    client->eraseFromBuffer(curpos);
 
     return DATA_OK;
 
@@ -223,9 +225,32 @@ std::vector<uint8_t> Drawboard::getUserlist()
 
 int Drawboard::sendChat(Client *client,std::string data, uint8_t chan)
 {
-  std::vector<uint8_t> data;
-  data.push_back(ACTION_CHAT_DATA);
+  uint8_t tempdata[4];
+  std::vector<uint8_t> chatdata;
 
+  //Type byte
+  chatdata.push_back(ACTION_CHAT_DATA);
+
+  //UID
+  putUint16(&tempdata[0],client->UID);
+  chatdata.insert(chatdata.end(),&tempdata[0],&tempdata[0]+2);
+
+  //Nick size
+  chatdata.push_back(client->nick.size());
+
+  //Nick
+  chatdata.insert(chatdata.end(),client->nick.data(),client->nick.data()+client->nick.size());
+
+  //Channel ID
+  chatdata.push_back(0);
+
+  //Msg size
+  chatdata.push_back(data.size());
+
+  //Nick
+  chatdata.insert(chatdata.end(),data.data(), data.data()+data.size());
+
+  sendAll((uint8_t *)&chatdata[0],chatdata.size());
 
   return 1;
 }

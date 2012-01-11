@@ -33,6 +33,7 @@ const int DATA_OK = 1;
 
 const char ACTION_DRAW_DATA             = 0x00;
 const char ACTION_COMPRESSED_DRAW_DATA  = 0x01;
+const char ACTION_PNG_REQUEST           = 0x02;
 const char ACTION_USER_ADD              = 0x03;
 const char ACTION_USER_REM              = 0x03;
 const char ACTION_CHAT_DATA             = 0x04;
