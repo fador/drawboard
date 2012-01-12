@@ -242,6 +242,9 @@ int Drawboard::sendChat(Client *client,std::string data, uint8_t chan)
 
   //Type byte
   chatdata.push_back(ACTION_CHAT_DATA);
+  
+  //Msg len, allocate the space
+  chatdata.insert(chatdata.end(),&tempdata[0],&tempdata[0]+2);
 
   //UID
   putUint16(&tempdata[0],client->UID);
@@ -261,6 +264,9 @@ int Drawboard::sendChat(Client *client,std::string data, uint8_t chan)
 
   //Nick
   chatdata.insert(chatdata.end(),data.data(), data.data()+data.size());
+
+  //Fill in the len information
+  putUint16(&chatdata[1], chatdata.size()-3);
 
   sendAll((uint8_t *)&chatdata[0],chatdata.size());
 
