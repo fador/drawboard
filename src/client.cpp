@@ -101,9 +101,11 @@ extern "C" void client_callback(int fd, short ev, void* arg)
       {
         //uncompressed draw data
         case ACTION_DRAW_DATA:
+        case ACTION_COMPRESSED_DRAW_DATA:
           {
             //Datalen
             uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
+
 
             #ifdef DEBUG
             std::cout << "  Draw data " << len << std::endl;
@@ -115,47 +117,36 @@ extern "C" void client_callback(int fd, short ev, void* arg)
               event_add(&client->m_event, NULL);
               return;
             }
+
             std::vector<uint8_t> drawdata;
             drawdata.insert(drawdata.begin(),&client->buffer[0]+curpos, &client->buffer[0]+curpos+len);
 
-            client->eraseFromBuffer(curpos+len);
-          }
-          break;
-        //compressed draw data
-        case ACTION_COMPRESSED_DRAW_DATA:
-          {
-            //Datalen
-            uint32_t len=getUint16((uint8_t *)(&client->buffer[0]+curpos));  curpos += 2;
-
-            #ifdef DEBUG
-            std::cout << "  Compressed draw data " << len << std::endl;
-            #endif
-            //Wait for more data
-            if( (client->buffer.size() - curpos) < len)
+            //If compressed, uncompress
+            if(client->buffer[0] == ACTION_COMPRESSED_DRAW_DATA)
             {
-              event_set(&client->m_event, fd, EV_READ, client_callback, client);
-              event_add(&client->m_event, NULL);
-              return;
+              uint32_t read=2000;
+              uint8_t *out=(uint8_t *)malloc(2000);
+
+              //Uncompress the data, kick client if invalid
+              if(uncompress((Bytef *)out, (uLongf *)&read, (Bytef *)&drawdata[0], drawdata.size())!=0)
+              {
+                free(out);
+                Drawboard::get()->remClient(fd);
+                return;
+              }
+              drawdata.clear();
+              drawdata.insert(drawdata.begin(),out, out+read);
             }
-
-            std::vector<uint8_t> drawdata;
-            drawdata.insert(drawdata.begin(),&client->buffer[0]+curpos, &client->buffer[0]+curpos+len);
-
-            uint32_t read=2000;
-
-            uint8_t *out=(uint8_t *)malloc(2000);
-
-            //Uncompress the data, kick client if invalid
-            if(uncompress((Bytef *)out, (uLongf *)&read, (Bytef *)&drawdata[0], drawdata.size())!=0)
+            //Echo to others
+            if(drawdata.size())
             {
-              free(out);
-              Drawboard::get()->remClient(fd);
-              return;
+              Drawboard::get()->sendDrawdata(client,drawdata,0);
             }
 
             client->eraseFromBuffer(curpos+len);
           }
           break;
+
           //compressed draw data
         case ACTION_PNG_REQUEST:
           {
@@ -200,15 +191,19 @@ extern "C" void client_callback(int fd, short ev, void* arg)
             uint8_t chan = client->buffer[curpos];    curpos++;
             uint8_t datalen=client->buffer[curpos];   curpos++;
 
-            std::string chatdata(&client->buffer[curpos], &client->buffer[curpos]+datalen);
+            if(datalen)
+            {
+              std::string chatdata(&client->buffer[curpos], &client->buffer[curpos]+datalen);
+            
+              #ifdef DEBUG
+              std::cout << "    Repeating chat data" << std::endl;
+              #endif
+              Drawboard::get()->sendChat(client, chatdata, chan);
+            }
 
             //Clear the data from the buffer
             client->eraseFromBuffer(curpos+datalen);
 
-            #ifdef DEBUG
-            std::cout << "    Repeating chat data" << std::endl;
-            #endif
-            Drawboard::get()->sendChat(client, chatdata, chan);
 
           }
           break;

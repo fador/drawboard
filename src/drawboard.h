@@ -88,7 +88,7 @@ class Drawboard
 
   int sendAll(uint8_t *data, uint32_t datalen, int exception=0);
   int send(int fd,uint8_t *data, uint32_t datalen);
-
+  int sendDrawdata(Client *client,std::vector<uint8_t> data, uint8_t chan);
   int sendChat(Client *client,std::string data, uint8_t chan);
   std::vector<uint8_t> getUserlist();
 

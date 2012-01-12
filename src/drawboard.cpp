@@ -234,6 +234,34 @@ std::vector<uint8_t> Drawboard::getUserlist()
   return data;
 }
 
+int Drawboard::sendDrawdata(Client *client,std::vector<uint8_t> data, uint8_t chan)
+{
+  uint8_t tempdata[4];
+  std::vector<uint8_t> drawdata;
+
+  //ToDo: add compression
+
+  //Type byte
+  drawdata.push_back(ACTION_DRAW_DATA);
+  
+  //Msg len, allocate the space
+  drawdata.insert(drawdata.end(),&tempdata[0],&tempdata[0]+2);
+
+  //UID
+  putUint16(&tempdata[0],client->UID);
+  drawdata.insert(drawdata.end(),&tempdata[0],&tempdata[0]+2);
+
+  //the data
+  drawdata.insert(drawdata.end(),&data[0],&data[0]+data.size());
+
+  //Fill in the length information
+  putUint16(&drawdata[1], drawdata.size()-3);
+
+  sendAll((uint8_t *)&drawdata[0],drawdata.size());
+
+  return 1;
+}
+
 
 int Drawboard::sendChat(Client *client,std::string data, uint8_t chan)
 {
@@ -265,7 +293,7 @@ int Drawboard::sendChat(Client *client,std::string data, uint8_t chan)
   //Nick
   chatdata.insert(chatdata.end(),data.data(), data.data()+data.size());
 
-  //Fill in the len information
+  //Fill in the length information
   putUint16(&chatdata[1], chatdata.size()-3);
 
   sendAll((uint8_t *)&chatdata[0],chatdata.size());

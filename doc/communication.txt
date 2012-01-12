@@ -16,7 +16,7 @@ Format:
     IF Type == 0x00/0x01
       Datalen             2 bytes (unsigned) (not compressed)
       UserID              2 bytes //Only from server! Not used yet!
-      Color RGB           3 bytes //writeByte (unsigned)
+      Color RGB           4 bytes //writeByte (unsigned)
       Brush               1 byte (unsigned)
       Start X         2 bytes (Absolute) //writeShort (Signed)
       Start Y         2 bytes (Absolute) //writeShort (Signed)

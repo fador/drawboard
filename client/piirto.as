@@ -707,6 +707,7 @@ package
         if (temptype == 1)
           event.data.uncompress();
         
+        infoField.text ="drawdata incoming";
         if (connected)
           drawArea.autodraw(event.data);
         //While not "connected", save incoming autodraw data
@@ -873,7 +874,7 @@ package
       
       var dataToSend:ByteArray = new ByteArray();
       dataToSend.writeByte(2); //PNG request
-      dataToSend.writeShort(0); //Len
+      dataToSend.writeShort(9); //Len
       dataToSend.writeUnsignedInt(0); //X
       dataToSend.writeUnsignedInt(0); //Y
       dataToSend.writeByte(0); //Level
@@ -881,6 +882,7 @@ package
       
       server.flush();
     
+      connected = true;
     }
     
     private function closeHandler(event:Event):void
@@ -953,8 +955,8 @@ package
         if (brush == 0)
         {
           scrolling = true;
-          startx = event.stageX;
-          starty = event.stageY;
+          startx = event.stageX - drawArea.shiftX;
+          starty = event.stageY - drawArea.shiftY;
           return;
         }
         
@@ -1105,9 +1107,8 @@ package
           {
             for (xi = 0; xi < brush; xi++)
               drawArea.paintStage.setPixel(p0.x + (vx * i) + (xi - brush / 2), p0.y + (vy * i) + (yi - brush / 2), colorArray[currentColor]);
-          }
-          
-        }
+          }          
+        }        
         p0.x = p1.x;
         p0.y = p1.y;
       }

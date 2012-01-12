@@ -22,7 +22,7 @@ package com.fador
   
   public class DrawBoard extends MovieClip
   {
-    public var paintStage:BitmapData = new BitmapData(1024, 768, false, 0xFFFFFF);
+    public var paintStage:BitmapData = new BitmapData(700, 700, false, 0xFFFFFF);
     
     private var i:uint = new uint(0);
     private var ii:uint = new uint(0);
@@ -105,6 +105,7 @@ package com.fador
       var endy:int = new int(0);
       var drawColor:uint = new uint(0);
       var drawBrush:uint = new uint(1);
+      var drawUID:int = new int( -1);
       var xi:uint = new uint(0);
       var yi:uint = new uint(0);
       var i:uint = new uint(0);
@@ -113,6 +114,7 @@ package com.fador
       var len:Number = new Number(0);
       
       //drawtype=drawdata.readByte();
+      drawUID = drawdata.readShort();
       drawColor = drawdata.readUnsignedInt();
       drawBrush = drawdata.readByte();
       
@@ -154,7 +156,7 @@ package com.fador
       }
       catch (e:EOFError)
       {
-        
+        trace("error in draw data!");
       }
     
     }
