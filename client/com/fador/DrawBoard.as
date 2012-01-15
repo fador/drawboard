@@ -98,28 +98,37 @@ package com.fador
     //Draws inputted data from other users
     public function autodraw(drawdata:ByteArray):void
     {
+      
+
       var sx:int = new int(0);
       var sy:int = new int(0);
       var endx:int = new int(0);
-      var drawtype:uint = new uint(0);
+      //var drawtype:uint = new uint(0);
       var endy:int = new int(0);
       var drawColor:uint = new uint(0);
       var drawBrush:uint = new uint(1);
-      var drawUID:int = new int( -1);
+      var drawUID:int = new int(0);
       var xi:uint = new uint(0);
       var yi:uint = new uint(0);
       var i:uint = new uint(0);
       var vx:Number = new Number(0);
       var vy:Number = new Number(0);
       var len:Number = new Number(0);
+
+      //Clear the data position
+      drawdata.position = 0;
       
       //drawtype=drawdata.readByte();
-      drawUID = drawdata.readShort();
+      
+      drawUID = drawdata.readShort();      
       drawColor = drawdata.readUnsignedInt();
       drawBrush = drawdata.readByte();
+
       
-      sx = int(drawdata.readShort());
-      sy = int(drawdata.readShort());
+
+      //Starting point
+      sx = drawdata.readShort();
+      sy = drawdata.readShort();
       
       for (yi = 0; yi < drawBrush; yi++)
       {
@@ -136,6 +145,7 @@ package com.fador
           vx = endx;
           vy = endy;
           
+          //Interpolate from start to end
           len = Math.sqrt(vx * vx + vy * vy);
           vx /= len;
           vy /= len;
@@ -157,6 +167,7 @@ package com.fador
       catch (e:EOFError)
       {
         trace("error in draw data!");
+        
       }
     
     }

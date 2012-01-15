@@ -682,16 +682,25 @@ package
     
     }
     
-    private function sendToServer(data:ByteArray):void
+    private function sendToServer(data:ByteArray, compressed:Boolean):void
     {
       var dataToSend:ByteArray = new ByteArray();
-      dataToSend.writeByte(1);
+      if (compressed)
+      {
+        dataToSend.writeByte(1);
+      }
+      else
+      {
+        dataToSend.writeByte(0);
+      }
       //dataToSend.writeByte(0); //Uncompressed
       dataToSend.writeShort(data.length);
       dataToSend.writeBytes(data);
       server.writeBytes(dataToSend);
       //infoField.text="sending.."+dataToSend.length+" bytes";
     }
+    
+     
     
     private function dataHandler(event:SocketEvent):void
     {
@@ -703,11 +712,12 @@ package
       //Drawdata
       trace("Incoming data type: " + temptype);
       if (temptype == 0 || temptype == 1)
-      {
+      {        
         if (temptype == 1)
           event.data.uncompress();
         
-        infoField.text ="drawdata incoming";
+        //infoField.text ="drawdata incoming "+event.data.length;
+        
         if (connected)
           drawArea.autodraw(event.data);
         //While not "connected", save incoming autodraw data
@@ -903,8 +913,9 @@ package
       {
         if (paintData.length)
         {
+          //ToDo: check if any help from compression
           paintData.compress();
-          sendToServer(paintData);
+          sendToServer(paintData, true);
           //autodraw(paintData);
           //paintData.clear();
           paintData = new ByteArray();
@@ -957,6 +968,8 @@ package
           scrolling = true;
           startx = event.stageX - drawArea.shiftX;
           starty = event.stageY - drawArea.shiftY;
+          
+          
           return;
         }
         
@@ -966,6 +979,7 @@ package
         p1.x = p0.x;
         p1.y = p0.y;
         
+        //infoField.text = "Start: "+p0.x+","+p0.y;
         for (yi = 0; yi < brush; yi++)
         {
           for (xi = 0; xi < brush; xi++)
@@ -990,9 +1004,10 @@ package
       {
         if (!written && paintData.length > 3)
         {
+          //ToDo: check if any help from compression
           paintData.compress();
           //infoField.text = "Bytes: "+paintData.length;
-          sendToServer(paintData);
+          sendToServer(paintData, true);
           //autodraw(paintData);
           //paintData.clear();
           paintData = new ByteArray();
