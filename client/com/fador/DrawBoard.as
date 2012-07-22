@@ -139,6 +139,7 @@ package com.fador
       {
         while (1)
         {
+          //Read endpoint difference (-127..127)
           endx = drawdata.readByte();
           endy = drawdata.readByte();
           
@@ -159,15 +160,16 @@ package com.fador
             
           }
           
+          //The endpoint is the new start
           sx = sx + endx;
-          sy = sy + endy;
-          //infoField.text ="start "+sy+" "+sx+" End "+endx+" "+endy;
+          sy = sy + endy;          
+          
         }
       }
       catch (e:EOFError)
       {
-        trace("error in draw data!");
-        
+        //trace("error in draw data!");
+        //End of data        
       }
     
     }

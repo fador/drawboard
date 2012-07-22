@@ -27,7 +27,7 @@ package
   import flash.display.Loader;
   
 
-  public class piirto extends MovieClip
+  public class drawboard extends MovieClip
   {
     
     private var bgColor:uint = new uint("0xB8DBF5");
@@ -87,7 +87,7 @@ package
     public var infoField:TextField = new TextField();
     private var colorField:TextField = new TextField();
     //private var brushField:TextField = new TextField();
-    public var t:Timer = new Timer(delay, 0);
+    public var t:Timer = new Timer(delay);
     
     public var chatField:TextField = new TextField();
     public var userField:TextField = new TextField();
@@ -115,7 +115,7 @@ package
     private var hash:String = new String();
     private var paramtime:int = new int();
     
-    public function piirto()
+    public function drawboard()
     {
       startPos = root.loaderInfo.parameters.startpos;
       hash = root.loaderInfo.parameters.hash;
@@ -126,7 +126,7 @@ package
       userField.y = 10;
       userField.width = 115;
       userField.height = 700;
-      userField.text = "Paikalla:\n";
+      userField.text = "Users online:\n";
       userField.background = true;
       userField.border = true;
       userField.selectable = false;
@@ -135,7 +135,7 @@ package
       chatField.y = 10;
       chatField.width = 200;
       chatField.height = 700;
-      chatField.text = "Chat!\n";
+      chatField.text = "Chat is open\n";
       chatField.background = true;
       chatField.border = true;
       chatField.selectable = false;
@@ -171,7 +171,7 @@ package
       t.addEventListener(flash.events.TimerEvent.TIMER, timerHandler);
       t.start();
       
-      //Define colors in palette
+      //Define colors in palette (ToDo: save user specific palette?)
       colorArray[0] = uint("0xffffff");
       colorArray[1] = uint("0x000000");
       colorArray[2] = uint("0xffff00");
@@ -288,9 +288,6 @@ package
       server.addEventListener("newdata", dataHandler);
       
       server.connect(root.loaderInfo.parameters.host, root.loaderInfo.parameters.port);
-      //server.connect("81.19.124.25", 2089);
-      //server.connect("localhost", 2089);
-      //server.connect("94.237.93.239", 2089);           
       
       dataToSocket = new ByteArray();
       paintData = new ByteArray();
@@ -844,7 +841,7 @@ package
     
     private function updateNickList():void
     {
-      userField.text = "Paikalla:\n";
+      userField.text = "Users online:\n";
       
       for (i = 0; i < nickList.length; i++)
       {
@@ -1064,7 +1061,7 @@ package
       }
       if (drawing && isInDrawArea(event.stageX, event.stageY))
       {
-        
+        //If we already written the current data, insert headers again
         if (written)
         {
           paintData.writeUnsignedInt(colorArray[currentColor]);
@@ -1073,44 +1070,39 @@ package
           paintData.writeShort(starty);
           written = 0;
         }
+        //Current mouse position in the draw area
         p1.x = int(event.stageX - drawArea.shiftX);
         p1.y = int(event.stageY - drawArea.shiftY);
         
-        /*
-           for(yi=0;yi<brush;yi++)
-           {
-           for(xi=0;xi<brush;xi++)
-           paintStage.setPixel(event.stageX+(xi-brush/2),event.stageY+(yi-brush/2),0x000000);
-           }
-         */
         
         vx = p1.x - p0.x;
         vy = p1.y - p0.y;
         
+        //If we have length more than 127, we have to split it in multiple diff bytes
         if (Math.abs(int(p1.x) - startx) > 127 || Math.abs(int(p1.y) - starty) > 127)
         {
-          var temp:int = new int(Math.abs(int(p1.x) - startx) / 127);
-          var temp2:int = new int(Math.abs(int(p1.y) - starty) / 127);
+          var x_len:int = new int(Math.abs(int(p1.x) - startx) / 127)+1;
+          var y_len:int = new int(Math.abs(int(p1.y) - starty) / 127)+1;          
           
-          if (temp < temp2)
+          var len:int = new int(x_len);
+          if (x_len < y_len)
           {
-            temp = temp2;
+            len = y_len;
           }
           
-          for (temp2 = 1; temp2 < temp; temp2++)
+          for (var part:int = 1; part <= len; part++)
           {
-            paintData.writeByte((int(p1.x) / (temp)) * temp2 - startx);
-            paintData.writeByte((int(p1.y) / (temp)) * temp2 - starty);
-            startx += (int(p1.x) / (temp)) * temp2;
-            starty += (int(p1.y) / (temp)) * temp2;
+            paintData.writeByte((int(p1.x) - startx)/len);
+            paintData.writeByte((int(p1.y) - starty)/len);
           }
         }
-        
-        paintData.writeByte(int(p1.x) - startx);
-        paintData.writeByte(int(p1.y) - starty);
-        
-        startx += int(p1.x) - startx;
-        starty += int(p1.y) - starty;
+        else
+        {
+          paintData.writeByte(int(p1.x) - startx);
+          paintData.writeByte(int(p1.y) - starty);
+        }
+        startx = int(p1.x);
+        starty = int(p1.y);
         
         len = Math.sqrt(vx * vx + vy * vy);
         vx /= len;
@@ -1123,7 +1115,7 @@ package
             for (xi = 0; xi < brush; xi++)
               drawArea.paintStage.setPixel(p0.x + (vx * i) + (xi - brush / 2), p0.y + (vy * i) + (yi - brush / 2), colorArray[currentColor]);
           }          
-        }        
+        }
         p0.x = p1.x;
         p0.y = p1.y;
       }
