@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2011, Marko Viitanen
+  Copyright (c) 2012, Marko Viitanen
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -182,9 +182,7 @@ int Drawboard::authenticate(Client* client)
     client->admin = (adminbit==0)?false:true;
 
 
-
     return DATA_OK;
-
 }
 
 
@@ -227,11 +225,40 @@ int Drawboard::send(int fd,uint8_t *data, uint32_t datalen)
 }
 
 
-std::vector<uint8_t> Drawboard::getUserlist()
+bool Drawboard::sendUserlist(Client* client)
 {
-  std::vector<uint8_t> data;  
-  data.push_back(1); //Add
-  return data;
+  uint8_t tempdata[2];
+  std::vector<uint8_t> data;
+  uint8_t users = 0;
+  data.push_back(ACTION_USER_ADD);
+
+  data.push_back(0); data.push_back(0); //Datalen
+
+  data.push_back(0); //Add
+
+  data.push_back(0); //Client number (fill at the end)
+
+  for (std::vector<Client*>::iterator it = m_clients.begin(); it!=m_clients.end(); ++it)
+  {
+    if((*it)->UID > 0)
+    {
+      putUint16(&tempdata[0],(*it)->UID);
+      data.insert(data.end(),&tempdata[0],&tempdata[0]+2);
+      data.push_back((uint8_t)((*it)->nick).size());
+      data.insert(data.end(),((*it)->nick).data(),((*it)->nick).data()+((*it)->nick).size());
+
+      users++;
+    }
+  }
+
+  data[4] = users;
+
+  //Fill in the length information
+  putUint16(&data[1], data.size()-3);
+
+  send(client->getFd(), (uint8_t *)&data[0],data.size());
+
+  return true;
 }
 
 int Drawboard::sendDrawdata(Client *client,std::vector<uint8_t> data, uint8_t chan)
@@ -331,10 +358,37 @@ bool Drawboard::remClient(int m_fd)
   //ToDo: send info of removed client
   if(UID != -1)
   {
+    uint8_t tempdata[2];
+    std::vector<uint8_t> remdata;
 
+    //Type byte
+    remdata.push_back(ACTION_USER_REM);
+
+    //Datalen
+    putUint16(&tempdata[0],4);
+    remdata.insert(remdata.end(),&tempdata[0],&tempdata[0]+2);
+
+    remdata.push_back(1); //Rem
+
+    remdata.push_back(1); //Number of users    
+
+    //UID
+    putUint16(&tempdata[0],UID);
+    remdata.insert(remdata.end(),&tempdata[0],&tempdata[0]+2);
+
+    sendAll((uint8_t *)&remdata[0],remdata.size());
   }
 
   std::cout << "Client removed" << std::endl;
 
+  return true;
+}
+
+
+bool Drawboard::addClient(Client* client)
+{
+
+  //Push the new client to the list
+  m_clients.push_back(client);
   return true;
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2011, Marko Viitanen
+  Copyright (c) 2012, Marko Viitanen
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -231,12 +231,36 @@ extern "C" void client_callback(int fd, short ev, void* arg)
           }
 
           //Send userlist to the new client
-          //outBuf = Drawboard::get()->getUserlist();
 
           //Generate uid for the user
           client->UID = Drawboard::get()->generateUID();
 
-          //ToDo: send others info of the new client
+          {
+            //Send others info about this client
+            uint8_t tempdata[2];
+            std::vector<uint8_t> data;
+
+            //Type byte
+            data.push_back(ACTION_USER_REM);
+
+            //Datalen
+            putUint16(&tempdata[0],5+client->nick.size());
+            data.insert(data.end(),&tempdata[0],&tempdata[0]+2);
+
+            data.push_back(0); //Add
+            data.push_back(1); //Number of users    
+
+            //UID
+            putUint16(&tempdata[0],client->UID);
+            data.insert(data.end(),&tempdata[0],&tempdata[0]+2);
+
+            data.push_back((uint8_t)client->nick.size());
+            data.insert(data.end(),(client->nick).data(),(client->nick).data()+(client->nick).size());
+
+            Drawboard::get()->sendAll((uint8_t *)&data[0],data.size(), client->getFd());
+          }
+          //Send userlist to the new client
+          Drawboard::get()->sendUserlist(client);
         }
         break;
 

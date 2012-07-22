@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2011, Marko Viitanen
+  Copyright (c) 2012, Marko Viitanen
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -77,11 +77,7 @@ class Drawboard
     return m_instance;
   }
 
-  bool addClient(Client* client)
-  {    
-    m_clients.push_back(client);
-    return true;
-  }
+  bool addClient(Client* client);
 
   //Search for the cliend and remove
   bool remClient(int m_fd);
@@ -90,7 +86,7 @@ class Drawboard
   int send(int fd,uint8_t *data, uint32_t datalen);
   int sendDrawdata(Client *client,std::vector<uint8_t> data, uint8_t chan);
   int sendChat(Client *client,std::string data, uint8_t chan);
-  std::vector<uint8_t> getUserlist();
+  bool sendUserlist(Client* client);
 
   int getClientCount() { return m_clients.size(); };
 
