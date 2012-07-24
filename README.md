@@ -10,26 +10,39 @@ Has been made only for Finnish users so sorry for everything being in finnish..I
 Screenshot:
 http://fador.be/kama/drawball.png
 
+### License
+3-clause BSD license also known as the New BSD License (see /LICENSE )
+Allows unlimited redistribution for any purpose as long as its copyright notices and the license's disclaimers of warranty are maintained.
+Flash policy server is not made by me and it has its own license /policy/LICENSE
+
+### Usage
+
+ * Run [Flash policy server](http://www.adobe.com/devnet/flashplayer/articles/socket_policy_files.html) ( included /policy/flashpolicyd.pl ), remember to edit flashpolicy.xml to match your server
+ * Run the drawball server
+ * Edit the flash params in drawball.html to match your server (host and port at least)
+ * Open the drawball.html file in browser and it should connect to the server
+ * Have fun drawing
+
 ### Required libs
 
  * libEvent (1.4.14)
  * zlib
- * libpng
- 
+ * libpng 
 
 ### NOTICE
 
-Does not currently work with included server software!
 Developed in VS2010, linux make files will be provided later.
 Flash requires policy server running on the server which it tries to connect.
 
-### Features (which used to work)
+### Features
  * User chat
  * Color palette 
- * Brush selection
- * External login support 
+ * Brush selection 
+ * Basic multiuser drawing
  
 ### ToDo
+ * Saving the draw area and send to connecting users
+ * External login support 
  * Reconnect button
  * Better color picker
  * Larger area

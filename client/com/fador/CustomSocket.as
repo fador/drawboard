@@ -1,3 +1,29 @@
+/*
+  Copyright (c) 2012, Marko Viitanen
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+  * Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+  * Neither the name of the The Mineserver Project nor the
+    names of its contributors may be used to endorse or promote products
+    derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 package com.fador
 {
@@ -43,21 +69,13 @@ package com.fador
       var i:uint = new uint(0);
       var bytes:uint = new uint(0);
       
-      //trace("Incoming: "+incoming);
-      
-      while (bytesAvailable > 3) // || moreData)
+      while (bytesAvailable > 3)
       {
         if (moreData > 0)
         {
-          //trace("moreData: "+moreData+ " bytesAvailable: "+bytesAvailable);
-          //newdata2.clear();
           newdata2 = new ByteArray();
           this.readBytes(newdata2, 0, (incoming < moreData) ? incoming : moreData);
           newdata.writeBytes(newdata2);
-          //bytes=newdata2.bytesAvailable;
-          //for(i=0;i<bytes;i++)
-          //  newdata.writeByte(newdata2[i]);
-          //throw new Error("Len2:"+newdata.bytesAvailable);
           if (incoming < moreData)
           {
             moreData -= incoming;
@@ -66,31 +84,28 @@ package com.fador
           {
             moreData = 0;
             dispatchEvent(new SocketEvent(readType, newdata, "newdata"));
-            //newdata.clear();
             newdata = new ByteArray();
           }
         }
         else
         {
           readType = readByte();
-          //if(first==0) break;
           incoming--;
+          
           //Drawdata
           if (readType == 0 || readType == 1 || readType == 3 || readType == 4)
           {
             len = readShort();
             incoming -= 2;
           }
+          
           //PNGdata
           else if (readType == 2)
           {
             len = readUnsignedInt();
             incoming -= 4;
           }
-          trace("type: " + readType + " Len: " + len + " bytesAvailable " + bytesAvailable);
-          
-          //newdata.writeByte(first);
-          //newdata2.clear();
+
           newdata2 = new ByteArray();
           this.readBytes(newdata2, 0, (incoming < len) ? incoming : len);
           newdata.writeBytes(newdata2);
@@ -103,44 +118,35 @@ package com.fador
           {
             moreData = 0;
             dispatchEvent(new SocketEvent(readType, newdata, "newdata"));
-            //newdata.clear();
-            newdata = new ByteArray();
-            
+            newdata = new ByteArray();            
           }
-            //throw new Error("Len:"+newdata.bytesAvailable);
+
         }
       }
     }
     
     private function closeHandler(event:Event):void
     {
-      //trace("closeHandler: " + event);
-      //trace(response.toString());
-      //var eventti:Event = new Event("closed");
       dispatchEvent(new Event("closed"));
     }
     
     private function connectHandler(event:Event):void
     {
-      //trace("connectHandler: " + event);
       dispatchEvent(new Event("connected"));
     }
     
     private function ioErrorHandler(event:IOErrorEvent):void
     {
-      //trace("ioErrorHandler: " + event);
       closeHandler(event);
     }
     
     private function securityErrorHandler(event:SecurityErrorEvent):void
     {
-      //trace("securityErrorHandler: " + event);
       closeHandler(event);
     }
     
     private function socketDataHandler(event:ProgressEvent):void
     {
-      //trace("socketDataHandler: " + event);
       readResponse();
     }
   }

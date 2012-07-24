@@ -10,7 +10,7 @@
 
    <!-- Instead of setting to-ports="*", administrator's can use ranges and commas -->
    <!-- This will allow access to ports 123, 456, 457 and 458 -->
-   <allow-access-from domain="*" to-ports="1-65500" />
+   <allow-access-from domain="*" to-ports="2089" />
    <allow-access-from domain="fador.be" to-ports="*" />
 
 </cross-domain-policy>
