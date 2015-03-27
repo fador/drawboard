@@ -29,6 +29,10 @@
 #ifdef WIN32
 #include <cstdlib>
 typedef int socklen_t;
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #endif
 #include <cstdint>
 #include <cerrno>

@@ -30,6 +30,18 @@
 #include <string>
 #include <vector>
 
+#ifndef _WIN32
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+
+#ifndef SOCKET_ERROR
+#define SOCKET_ERROR  -1
+#endif
+
+#endif
+
 #include "md5/md5.h"
 #include "drawboard.h"
 #include "client.h"
