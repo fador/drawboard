@@ -1,0 +1,22 @@
+TARGET  = drawboard
+CXX_SRC = main.cpp client.cpp drawboard.cpp tools.cpp
+C_SRC   = md5/md5.c
+
+CXX_OBJ = $(patsubst %.cpp,%.o,$(CXX_SRC))
+C_OBJ   = $(patsubst %.c,%.o,$(C_SRC))
+
+CFLAGS   ?= -O2 -g
+CXXFLAGS ?= -O2 -g
+LDFLAGS  ?= -Wl,--as-needed
+
+CXXFLAGS += -std=c++11 $(shell pkg-config --cflags zlib) $(shell pkg-config --cflags libpng)
+LDFLAGS  += -levent $(shell pkg-config --libs zlib) $(shell pkg-config --libs libpng)
+C_OBJ   = $(patsubst %.c,%.o,$(C_SRC))
+
+all: $(TARGET)
+
+$(TARGET): $(CXX_OBJ) $(C_OBJ)
+	$(CXX) -o "$@" $^ $(LDFLAGS)
+
+clean:
+	-rm -f "$(TARGET)" $(CXX_OBJ) $(C_OBJ)

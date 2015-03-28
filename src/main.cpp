@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
   signal(SIGINT, sighandler);
 
 #ifndef WIN32
-  signal(SIGPIPE, pipehandler);
+  signal(SIGPIPE,  sighandler);
 #else
   signal(SIGBREAK, sighandler);
 #endif

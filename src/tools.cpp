@@ -39,6 +39,7 @@
 #include "tools.h"
 #include "drawboard.h"
 
+#include <string.h>
 
 void putSint32(uint8_t* buf, int32_t value)
 {
